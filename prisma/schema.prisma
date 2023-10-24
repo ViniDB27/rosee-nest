@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentMethod {
+  CARD
+  BOLETO
+  PIX
+}
+
+model Admin {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  cpf       String   @unique
+  email     String   @unique
+  phone     String   @unique
+  birthdate DateTime
+  order     Order[]
+}
+
+model Address {
+  id           String  @id @default(uuid())
+  street       String
+  number       String
+  complement   String
+  neighborhood String
+  city         String
+  state        String
+  clientId     String
+  order        Order[]
+}
+
+model Product {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  quantity    Int
+
+  productOrder ProductOrder[]
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  paymentMethod PaymentMethod
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  deliveryAddressId String
+  deliveryAddress   Address @relation(fields: [deliveryAddressId], references: [id])
+
+  productsOrder ProductOrder[]
+
+  creditCard CreditCard?
+  pix        Pix?
+  boleto     Boleto?
+}
+
+model ProductOrder {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  quantity    Int
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+}
+
+model CreditCard {
+  id     String @id @default(uuid())
+  name   String
+  number String
+
+  installments Int
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+}
+
+model Pix {
+  id     String @id @default(uuid())
+  code   String
+  qrcode String
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+}
+
+model Boleto {
+  id   String @id @default(uuid())
+  code String
+  file String
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+}
